@@ -17,6 +17,20 @@ type email = {
 function App() {
   // Use initialEmails for state
   const [emailsList, setEmailsList] = useState(initialEmails);
+  const [initEmails, setInitEmails] = useState(
+    JSON.parse(JSON.stringify(initialEmails))
+  );
+  const [hideRead, setHideRead] = useState(false);
+  const [inboxNr, setInboxNr] = useState(initialEmails.length);
+  const [starredNr, setStarredNr] = useState(function () {
+    let count = 0;
+    for (let email of emailsList) {
+      if (email.starred) {
+        count++;
+      }
+    }
+    return count;
+  });
 
   return (
     <div className="app">
@@ -25,17 +39,28 @@ function App() {
         <ul className="inbox-list">
           <li
             className="item active"
-            // onClick={() => {}}
+            onClick={() => {
+              setEmailsList(initEmails);
+            }}
           >
             <span className="label">Inbox</span>
-            <span className="count">?</span>
+            <span className="count">{inboxNr}</span>
           </li>
           <li
             className="item"
-            // onClick={() => {}}
+            onClick={() => {
+              setEmailsList(() => {
+                let copyEmailLists = JSON.parse(
+                  JSON.stringify(emailsList)
+                ).filter((email: email) => {
+                  return email.starred;
+                });
+                return copyEmailLists;
+              });
+            }}
           >
             <span className="label">Starred</span>
-            <span className="count">?</span>
+            <span className="count">{starredNr}</span>
           </li>
 
           <li className="item toggle">
@@ -43,8 +68,21 @@ function App() {
             <input
               id="hide-read"
               type="checkbox"
-              checked={false}
-              // onChange={() => {}}
+              onChange={() => {
+                if (!hideRead) {
+                  setEmailsList(() => {
+                    let filteredEmailsList;
+                    filteredEmailsList = emailsList.filter((email) => {
+                      return !email.read;
+                    });
+
+                    return JSON.parse(JSON.stringify(filteredEmailsList));
+                  });
+                } else {
+                  setEmailsList(JSON.parse(JSON.stringify(initEmails)));
+                }
+                setHideRead(!hideRead);
+              }}
             />
           </li>
         </ul>
@@ -59,11 +97,10 @@ function App() {
               className="first-child"
               checked={email.read}
               onClick={() => {
-                console.log(index);
-                let copyEmailLists = JSON.parse(JSON.stringify(emailsList));
-                copyEmailLists[index].read = !email.read;
+                let copyEmailLists = JSON.parse(JSON.stringify(initEmails));
+                copyEmailLists[index].read = !copyEmailLists[index].read;
+                setInitEmails(JSON.parse(JSON.stringify(copyEmailLists))); //JSON.parse(JSON.stringify(copyEmailLists));
                 setEmailsList(copyEmailLists);
-                console.log(emailsList);
               }}
             />
             <input
@@ -71,11 +108,15 @@ function App() {
               type="checkbox"
               checked={email.starred}
               onClick={() => {
-                console.log(index);
-                let copyEmailLists = JSON.parse(JSON.stringify(emailsList));
+                if (email.starred) {
+                  setStarredNr(starredNr - 1);
+                } else {
+                  setStarredNr(starredNr + 1);
+                }
+                let copyEmailLists = JSON.parse(JSON.stringify(initEmails));
                 copyEmailLists[index].starred = !email.starred;
-                setEmailsList(copyEmailLists);
-                console.log(emailsList);
+                setInitEmails(JSON.parse(JSON.stringify(copyEmailLists)));
+                setEmailsList(JSON.parse(JSON.stringify(copyEmailLists)));
               }}
             />
             <div className="">{email.sender}</div>
